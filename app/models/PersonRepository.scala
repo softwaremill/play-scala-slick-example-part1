@@ -57,29 +57,26 @@ class PersonRepository @Inject()(dbConfigProvider: DatabaseConfigProvider)(impli
 
 
   def create(name: String, age: Int): IO[Person] =
-    IO.fromFuture {
-      IO {
-        db.run {
-          // We create a projection of just the name and age columns, since we're not inserting a value for the id column
-          (people.map(p => (p.name, p.age))
-            // Now define it to return the id, because we want to know what id was generated for the person
-            returning people.map(_.id)
-            // And we define a transformation for the returned value, which combines our original parameters with the
-            // returned id
-            into ((nameAge, id) => Person(id, nameAge._1, nameAge._2))
-            // And finally, insert the person into the database
-            ) += (name, age)
-        }
+    RepoUtil.fromFuture {
+      db.run {
+        // We create a projection of just the name and age columns, since we're not inserting a value for the id column
+        (people.map(p => (p.name, p.age))
+          // Now define it to return the id, because we want to know what id was generated for the person
+          returning people.map(_.id)
+          // And we define a transformation for the returned value, which combines our original parameters with the
+          // returned id
+          into ((nameAge, id) => Person(id, nameAge._1, nameAge._2))
+          // And finally, insert the person into the database
+          ) += (name, age)
       }
     }
 
 
-  def list(): IO[Seq[Person]] = IO.fromFuture {
-    IO {
+  def list(): IO[Seq[Person]] = {
+    RepoUtil.fromFuture {
       db.run {
         people.result
       }
-
     }
   }
 }
